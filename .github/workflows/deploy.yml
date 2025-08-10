@@ -1,0 +1,52 @@
+name: React CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  build-test-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      # Install dependencies
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm install vite@latest
+          npm install react-router-dom
+
+      # Run tests if present
+      - name: Run tests
+        run: npm test --if-present
+
+      # Build the project
+      - name: Build project
+        run: npm run build --if-present
+
+      # Configure Git identity for deployment
+      - name: Configure Git identity
+        run: |
+          git config --global user.name "pallavi-doctom"
+          git config --global user.email "chittimallapalla1@gmail.com"
+
+      # Deploy to GitHub Pages
+      - name: Authenticate and deploy to GitHub Pages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
+          npm run deploy
